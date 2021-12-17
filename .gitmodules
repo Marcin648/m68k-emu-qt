@@ -1,0 +1,3 @@
+[submodule "libs/m68k-emu"]
+	path = libs/m68k-emu
+	url = https://github.com/Marcin648/m68k-emu.git

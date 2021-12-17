@@ -1,0 +1,8 @@
+# CMake
+build
+
+# IDEs
+.vscode
+
+# Qt Creator
+CMakeLists.txt.user
