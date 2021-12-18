@@ -6,5 +6,6 @@ QM68K::QM68K(QObject* parent) : QObject(parent){
 }
 
 void QM68K::test(){
-    qInfo() << "QM68K Hello TEST";
+    qInfo() << "QM68K Hello ";
+    this->cpu.state.debugPrint();
 }

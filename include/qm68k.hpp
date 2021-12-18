@@ -3,6 +3,8 @@
 #include <QObject>
 #include <QtQuick>
 
+#include "m68k.hpp"
+
 class QM68K : public QObject{
     Q_OBJECT
 public:
@@ -10,4 +12,7 @@ public:
 
 public slots:
     void test();
+
+protected:
+    M68K::CPU cpu;
 };

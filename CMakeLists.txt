@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(m68k-emu-qt LANGUAGES CXX VERSION 0.1.0)
 
+add_subdirectory(libs/m68k-emu)
+
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -28,6 +30,7 @@ set(RES
 )
 
 include_directories(include)
+include_directories(libs/m68k-emu/include)
 
 find_package(Qt6 COMPONENTS Core Quick REQUIRED)
 
@@ -43,5 +46,7 @@ qt_add_qml_module(m68k-emu-qt
     RESOURCES ${RES}
 )
 
+
+
 target_compile_definitions(m68k-emu-qt PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>)
-target_link_libraries(m68k-emu-qt PRIVATE Qt6::Core Qt6::Quick)
+target_link_libraries(m68k-emu-qt PRIVATE Qt6::Core Qt6::Quick m68k-emu)
