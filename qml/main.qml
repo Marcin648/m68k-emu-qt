@@ -2,13 +2,27 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Controls.Fusion
 import QtQuick.Layouts
+import QtQuick.Dialogs
+import Qt.labs.platform
 
 ApplicationWindow {
     id: root
-    width: 640
-    height: 480
+    width: 800
+    height: 600
     visible: true
     title: qsTr("M68K-EMU")
+
+    FileDialog {
+        id: file_dialog
+        fileMode: FileDialog.OpenFile
+        title: "Open M68K ELF file"
+        onAccepted: {
+            console.log(file_dialog.currentFile)
+            if(!qm68k.loadELF(file_dialog.currentFile)){
+                console.log("Invalid ELF file")
+            }
+        }
+    }
 
     header: ToolBar{
         RowLayout {
@@ -19,7 +33,7 @@ ApplicationWindow {
             ToolSeparator {}
             ToolButton {
                 text: "Open ELF"
-                onClicked: qm68k.test()
+                onClicked: file_dialog.open()
             }
             Item {
                 Layout.fillWidth: true
@@ -27,12 +41,14 @@ ApplicationWindow {
             ToolSeparator {}
             ToolButton {
                 text: "Reset"
+                onClicked: memory_view.address = 0xfffff0
             }
             ToolButton {
                 text: "Run"
             }
             ToolButton {
                 text: "Next"
+                onClicked: qm68k.step()
             }
         }
     }
@@ -40,20 +56,32 @@ ApplicationWindow {
     SplitView{
         anchors.fill: parent
         orientation: "Vertical"
+
         SplitView{
             SplitView.fillHeight: true
             orientation: "Horizontal"
-            DisassemblerView {
+            ScrollView{
                 SplitView.fillWidth: true
+                DisassemblerView {
+                    anchors.fill: parent
+                    id: disassembler_view
+                }
             }
 
-            RegisterView  {
-                implicitWidth: parent.width * 0.3
+            ScrollView{
+                implicitWidth: parent.width * 0.26
+                RegisterView  {
+                    anchors.fill: parent
+                    id: register_view
+                }
             }
+
+
         }
 
         MemoryView {
-            implicitHeight: parent.height * 0.3
+            id: memory_view
+            implicitHeight: parent.height * 0.35
         }
     }
 
