@@ -44,7 +44,8 @@ ApplicationWindow {
                 onClicked: memory_view.address = 0xfffff0
             }
             ToolButton {
-                text: "Run"
+                text: qm68k.isRun ? "PAUSE" : "RUN"
+                onClicked: qm68k.run()
             }
             ToolButton {
                 text: "Next"
@@ -86,9 +87,10 @@ ApplicationWindow {
     }
 
     Timer {
-        id: timer
-        interval: 2000
+        id: qm68k_timer
+        interval: 500
+        running: qm68k.isRun
 
-        onTriggered: Qt.quit()
+        onTriggered: qm68k.generation++
     }
 }

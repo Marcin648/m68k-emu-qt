@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <cctype>
 #include <iostream>
+#include <thread>
 #include <QDebug>
 
 QM68K::QM68K(QObject* parent) : QObject(parent){
@@ -19,8 +20,13 @@ void QM68K::setGeneration(int value){
     emit generationChanged();
 }
 
+bool QM68K::isRun(){
+    return m_is_run;
+}
+
 void QM68K::step(){
     try {
+        std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
         this->cpu.step();
     } catch (const std::exception& e) {
         qDebug() << "step -> " << e.what();
@@ -28,13 +34,27 @@ void QM68K::step(){
     emit generationChanged();
 }
 
+void QM68K::run(){
+    if(!this->m_is_run){
+        this->m_is_run = true;
+        this->m_cpu_worker = std::thread(QM68K::worker, this);
+    }else{
+        this->m_is_run = false;
+        this->m_cpu_worker.join();
+    }
+    emit isRunChanged();
+}
+
 bool QM68K::loadELF(QUrl path){
+    std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
     bool result = this->cpu.loadELF(path.toLocalFile().toStdString());
+    locker.~lock_guard();
     emit generationChanged();
     return result;
 }
 
 void QM68K::setRegister(size_t reg, uint32_t value){
+    std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
     if(reg <= 16){
         this->cpu.state.registers.set((M68K::RegisterType)reg, M68K::SIZE_LONG, value);
     }
@@ -43,12 +63,14 @@ void QM68K::setRegister(size_t reg, uint32_t value){
 }
 
 void QM68K::setFlag(size_t flag, bool value){
+    std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
     this->cpu.state.registers.set((M68K::StatusRegisterFlag)flag, value);
     qDebug() << "Set flag -> " << flag << " Value ->" << value;
     emit generationChanged();
 }
 
 size_t QM68K::getRegister(size_t reg){
+    std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
     uint32_t value = 0;
     if(reg <= 16){
         value = this->cpu.state.registers.get((M68K::RegisterType)reg, M68K::SIZE_LONG);
@@ -58,6 +80,7 @@ size_t QM68K::getRegister(size_t reg){
 }
 
 bool QM68K::getFlag(size_t flag){
+    std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
     bool value = 0;
     value = this->cpu.state.registers.get((M68K::StatusRegisterFlag)flag);
     qDebug() << "Get flag -> " << flag << " Value ->" << value;
@@ -65,6 +88,7 @@ bool QM68K::getFlag(size_t flag){
 }
 
 QString QM68K::memoryDump(size_t start_address, size_t count){
+    std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
     qDebug() << "Memory dump -> " << start_address << " Lines ->" << (count/16);
     std::vector<uint8_t> buffer;
     buffer.reserve(count);
@@ -110,6 +134,8 @@ QString QM68K::memoryDump(size_t start_address, size_t count){
 }
 
 QString QM68K::disassembly(uint32_t address){
+    std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
+    const size_t max_lines = 64;
     static uint32_t last_start_address = 0xFFFFFFFF;
     static uint32_t last_end_address = 0xFFFFFFFF;
 
@@ -125,6 +151,7 @@ QString QM68K::disassembly(uint32_t address){
     uint32_t real_pc = state.registers.get(M68K::REG_PC);
     state.registers.set(M68K::REG_PC, M68K::DataSize::SIZE_LONG, address);
     
+    size_t lines = 0;
     bool stop = false;
     while(!stop){
         try {
@@ -143,6 +170,10 @@ QString QM68K::disassembly(uint32_t address){
             if(typeid(*instruction) == typeid(M68K::INSTRUCTION::Illegal)){
                 stop = true;
             }
+            lines++;
+            if(lines > max_lines){
+                stop = true;
+            }
         } catch (const std::exception& e) {
             qDebug() << "disassembly -> " << e.what();
             stop = true;
@@ -152,4 +183,17 @@ QString QM68K::disassembly(uint32_t address){
     last_end_address = state.registers.get(M68K::REG_PC);
 
     return QString::fromStdString(stream.str());
+}
+
+void QM68K::worker(QM68K* qm68k){
+    while(qm68k->m_is_run){
+        try {
+            std::lock_guard<std::mutex> locker(qm68k->m_cpu_mutex);
+            qm68k->cpu.step();
+        } catch (const std::exception& e) {
+            qDebug() << "worker -> " << e.what();
+            qm68k->m_is_run = false;
+            emit qm68k->isRunChanged();
+        }
+    }
 }
