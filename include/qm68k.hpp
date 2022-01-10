@@ -27,6 +27,7 @@ public:
 public slots:
     void step();
     void run();
+    void reset();
     bool loadELF(QUrl path);
     void setRegister(size_t reg, uint32_t value);
     void setFlag(size_t flag, bool value);
@@ -42,6 +43,7 @@ protected:
     std::atomic_bool m_is_run = false;
     std::mutex m_cpu_mutex;
     std::thread m_cpu_worker;
+    QUrl m_program_path;
 
     static void worker(QM68K* qm68k);
 };

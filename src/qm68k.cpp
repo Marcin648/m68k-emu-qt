@@ -45,9 +45,17 @@ void QM68K::run(){
     emit isRunChanged();
 }
 
+void QM68K::reset(){
+    if(this->m_program_path.isEmpty() || this->m_is_run){
+        return;
+    }
+    this->loadELF(this->m_program_path);
+}
+
 bool QM68K::loadELF(QUrl path){
     std::lock_guard<std::mutex> locker(this->m_cpu_mutex);
     bool result = this->cpu.loadELF(path.toLocalFile().toStdString());
+    this->m_program_path = path;
     locker.~lock_guard();
     emit generationChanged();
     return result;

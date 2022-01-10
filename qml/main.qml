@@ -41,7 +41,7 @@ ApplicationWindow {
             ToolSeparator {}
             ToolButton {
                 text: "Reset"
-                onClicked: memory_view.address = 0xfffff0
+                onClicked: qm68k.reset()
             }
             ToolButton {
                 text: qm68k.isRun ? "PAUSE" : "RUN"
