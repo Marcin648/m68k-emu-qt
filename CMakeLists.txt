@@ -26,7 +26,11 @@ set(QML
 )
 
 set(RES
-    
+    res/icon_load.png
+    res/icon_pause.png
+    res/icon_reset.png
+    res/icon_run.png
+    res/icon_step.png
 )
 
 include_directories(include)

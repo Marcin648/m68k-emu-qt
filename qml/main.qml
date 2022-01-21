@@ -33,6 +33,7 @@ ApplicationWindow {
             ToolSeparator {}
             ToolButton {
                 text: "Open ELF"
+                icon.source: "qrc:/m68k_emu_qt/res/icon_load.png"
                 onClicked: file_dialog.open()
             }
             Item {
@@ -41,14 +42,18 @@ ApplicationWindow {
             ToolSeparator {}
             ToolButton {
                 text: "Reset"
+                icon.source: "qrc:/m68k_emu_qt/res/icon_reset.png"
                 onClicked: qm68k.reset()
             }
             ToolButton {
-                text: qm68k.isRun ? "PAUSE" : "RUN"
+                text: qm68k.isRun ? "Pause" : "Run"
+                icon.source: qm68k.isRun ? "qrc:/m68k_emu_qt/res/icon_pause.png" : "qrc:/m68k_emu_qt/res/icon_run.png"
+                
                 onClicked: qm68k.run()
             }
             ToolButton {
-                text: "Next"
+                text: "Step"
+                icon.source: "qrc:/m68k_emu_qt/res/icon_step.png"
                 onClicked: qm68k.step()
             }
         }
@@ -88,9 +93,9 @@ ApplicationWindow {
 
     Timer {
         id: qm68k_timer
-        interval: 500
+        interval: 100
         running: qm68k.isRun
-
+        repeat: true
         onTriggered: qm68k.generation++
     }
 }
